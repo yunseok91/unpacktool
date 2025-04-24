@@ -1,0 +1,46 @@
+project/
+├── core/
+│   ├── __init__.py
+│   ├── config.py           # 기본 설정값들 (상수, 환경설정)
+│   ├── file_manager.py     # Excel 파일 처리 관련
+│   └── selenium_manager.py # Selenium 설정 및 관리
+│
+├── functions/
+│   ├── __init__.py
+│   ├── function1.py        # Home Redirect 기능
+│   ├── function2.py        # Digital Data 기능
+│   └── function3.py        # Page Track 기능
+│   └── function4.py        # Navi 기능
+│   └── function5.py        # KV CTA 기능
+├── utils/
+│   └──logger.py #로그
+│
+├── upload_excel/ # 엑셀 포맷 첨부파일
+│   └── DigitalData_Test.xlsx
+│   └── PageTrack_Test.xlsx
+│   └── Redirection_Test.xlsx
+│
+├── resources/
+│   └── unpack.ui          # UI 파일
+│
+├── webdriver_manager/
+│   ├── edgedriver_133/    # Edge 드라이버
+│   └── chromedriver_133/  # Chrome 드라이버
+│
+├── Logo.ico
+└── main.py                # 메인 실행 파일
+
+
+
+pyinstaller 명령어
+#pyinstaller -F --icon="Logo.ico" --add-data "resources/unpack.ui;resources" --add-data "webdriver_manager/edgedriver_133/*;webdriver_manager/edgedriver_133" --add-data "webdriver_manager/chromedriver_133/*;webdriver_manager/chromedriver_133" --add-data "core/*;core" --add-data "functions/*;functions" --add-data "utils/*;utils" main.py
+#pyinstaller -F --noupx --noconsole --clean --add-data "resources/unpack.ui;resources" --icon="Logo.ico" main.py
+#pyinstaller -F --noupx --noconsole --clean --add-data "resources/unpack.ui;resources" --add-data "webdriver_manager;webdriver_manager" --icon="Logo.ico" main.py
+
+-F: 단일 실행 파일 생성
+--noupx: UPX 압축 비활성화로 실행 시간 단축
+--noconsole: 콘솔 창 숨김
+--clean: 빌드 전 캐시 정리
+--add-data: UI 파일 포함
+
+pyinstaller -F --noupx --noconsole --clean --add-data "pptGuide.ui" --icon="Logo.ico" ppttoexcel.py
