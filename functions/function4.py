@@ -28,7 +28,7 @@ class NavigationExtractFunction:
             QApplication.processEvents()
 
             if not class_name or class_name.strip() == "":
-                class_name = "floating-navigation__menu-item"  # 기본값
+                class_name = ".floating-navigation__menu-item"  # 기본값
 
             self.logger.log(f" Target Class: {class_name}")
             QApplication.processEvents()

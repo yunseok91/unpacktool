@@ -267,16 +267,6 @@ class MainWindow(QMainWindow):
                 self.logger.log("Selected Function: Navigation an-la")
                 self.logger.log(f"Target Class: {class_name}")
 
-                function.execute(
-                    self.uploaded_filename,
-                    selectsec,
-                    server_type,
-                    username,
-                    password,
-                    class_name,
-                    cookie
-                )
-                return
             elif self.functionBtn_5.isChecked():
                 function = KVFunction(
                     self.selenium_manager, self.file_manager, self.textEdit
@@ -288,14 +278,25 @@ class MainWindow(QMainWindow):
 
         # WMC 모드일 때만 cookie 전달
             if server_type == "WMC":
-                function.execute(
-                    self.uploaded_filename, 
-                    selectsec, 
-                    server_type, 
-                    username, 
-                    password, 
-                    cookie
-                )
+                if self.functionBtn_4.isChecked():
+                    function.execute(
+                        self.uploaded_filename, 
+                        selectsec, 
+                        server_type, 
+                        username, 
+                        password, 
+                        class_name,
+                        cookie if 'cookie' in locals() else None
+                    )
+                else:
+                    function.execute(
+                        self.uploaded_filename, 
+                        selectsec, 
+                        server_type, 
+                        username, 
+                        password, 
+                        cookie if 'cookie' in locals() else None
+                    )
             else:
                 function.execute(
                     self.uploaded_filename, 

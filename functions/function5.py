@@ -137,15 +137,29 @@ class KVFunction:
             # JS를 사용한 데이터 추출 예시
             kv_data = driver.execute_script("""
                 const results = [];
-                const slide = document.querySelector('.home-kv-carousel__slide[data-swiper-slide-index="0"]');
-                if (slide) {
-                    slide.querySelectorAll(".home-kv-carousel__cta-wrap a").forEach((link, index) => {
-                        results.push({
-                            index: index + 1,
-                            anCa: link.getAttribute("an-ca") || "",
-                            anLa: link.getAttribute("an-la") || "",
-                            text: link.textContent.trim()
-                        });
+                const ctaLinks = document.querySelectorAll('.hd08-hero-kv-home__cta-wrap a');
+                
+                if (ctaLinks) {
+                    ctaLinks.forEach((link, index) => {
+                        // 여러 조건으로 확실하게 필터링
+                        const hasDisplayOnClass = link.classList.contains('cta-kv-display-on');
+                        const hasText = link.textContent.trim().length > 0;
+                        const hasValidHref = link.getAttribute("href") && 
+                                            link.getAttribute("href") !== "" && 
+                                            link.getAttribute("href") !== "null";
+                        
+                        // cta-kv-display-on 클래스가 있거나, 텍스트와 유효한 href가 있는 경우만
+                        if (hasDisplayOnClass || (hasText && hasValidHref)) {
+                            // 추가로 빈 텍스트는 제외
+                            if (hasText) {
+                                results.push({
+                                    index: results.length + 1,
+                                    anCa: link.getAttribute("an-ca") || "",
+                                    anLa: link.getAttribute("an-la") || "",
+                                    text: link.textContent.trim()
+                                });
+                            }
+                        }
                     });
                 }
                 return results;
