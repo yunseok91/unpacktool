@@ -435,7 +435,7 @@ def main():
     try:
         app = QApplication(sys.argv)
         window = MainWindow()
-        window.logger.log("Application starting...")
+        window.logger.log("시작...")
         window.show()
         sys.exit(app.exec_())
 

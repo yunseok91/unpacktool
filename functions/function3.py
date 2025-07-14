@@ -3,7 +3,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from PyQt5.QtWidgets import QApplication
-
+from datetime import datetime
 from utils.logger import Logger
 import time
 
@@ -14,8 +14,10 @@ class PageTrackFunction:
         self.logger = Logger(text_widget) 
 
     def execute(self, filename, wait_time, server, username=None, password=None, cookie=None):
-        self.logger.log("Page Track 시작", "success")
+        start_time = datetime.now()
+        self.logger.log(f"🚀 Page Track 시작: {start_time.strftime('%Y년 %m월 %d일 %H시 %M분 %S초')}", "info")
         self.logger.log(f"Time Sleep : {wait_time}", "info")
+        QApplication.processEvents()  # UI 업데이트
 
         try:
             # 파일 로드
@@ -86,11 +88,17 @@ class PageTrackFunction:
 
             # 최종 저장
             self.file_manager.save_results('page_track')
-            self.logger.log('작업 완료', "success")
-            
+            end_time = datetime.now()
+            total_s = end_time - start_time
+
+            self.logger.log("최종 저장 완료", "success")
+            self.logger.log(f"소요시간: {str(total_s).split('.')[0]} (시:분:초)", "success")
+            QApplication.processEvents()
+
         except Exception as e:
             self.logger.log(f'오류 발생: {str(e)}', "error")
             self.file_manager.save_error_file()
+            QApplication.processEvents()
         
         finally:
             self.selenium_manager.quit_driver()

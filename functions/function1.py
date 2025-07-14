@@ -5,6 +5,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 from PyQt5.QtWidgets import QApplication
 from utils.logger import Logger
+from datetime import datetime
 
 import time, os
 
@@ -18,7 +19,8 @@ class HomeRedirectFunction:
         self.captureCheck = captureCheck
 
     def execute(self, filename, wait_time, server, username=None, password=None, cookie=None):
-        self.logger.log("Home redirect 시작", "info")
+        start_time = datetime.now()
+        self.logger.log(f"🚀 Home redirect 시작: {start_time.strftime('%Y년 %m월 %d일 %H시 %M분 %S초')}", "info")
         self.logger.log(f"Time Sleep : {wait_time}초")
         QApplication.processEvents()  # UI 업데이트
         try:
@@ -47,6 +49,7 @@ class HomeRedirectFunction:
                 if not link:
                     continue
                 self.logger.log(f"{str(i-4)}번째 Link -> {str(link)}")
+
                 QApplication.processEvents()
 
                 try:
@@ -116,7 +119,12 @@ class HomeRedirectFunction:
 
             # 최종 저장
             self.file_manager.save_results("home_redirect")
+            end_time = datetime.now()
+            total_s = end_time - start_time
+            
             self.logger.log("최종 저장 완료", "success")
+            self.logger.log(f"소요시간: {str(total_s).split('.')[0]} (시:분:초)", "success")
+
             QApplication.processEvents()
 
         except Exception as e:

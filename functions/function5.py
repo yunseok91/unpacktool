@@ -4,6 +4,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from PyQt5.QtWidgets import QApplication
 from utils.logger import Logger
+from datetime import datetime
 import time
 
 
@@ -14,8 +15,9 @@ class KVFunction:
         self.logger = Logger(text_widget)
 
     def execute(self, filename, wait_time, server, username=None, password=None,cookie=None):
-        self.logger.log("KV 실행")
-        self.logger.log(f"Time Sleep: {wait_time}")
+        start_time = datetime.now()
+        self.logger.log(f"🚀 KV 시작: {start_time.strftime('%Y년 %m월 %d일 %H시 %M분 %S초')}", "info")
+        self.logger.log(f"Time Sleep : {wait_time}초")
         QApplication.processEvents()
         
         try:
@@ -84,7 +86,13 @@ class KVFunction:
             
             # 결과 저장
             self.file_manager.save_results("KV_cta")
-            self.logger.log('작업 완료', "success")
+            end_time = datetime.now()
+            total_s = end_time - start_time
+            
+            self.logger.log("최종 저장 완료", "success")
+            self.logger.log(f"소요시간: {str(total_s).split('.')[0]} (시:분:초)", "success")
+
+            QApplication.processEvents()
             
         except Exception as e:
             self.logger.log(f'오류 발생: {str(e)}', "error")
@@ -134,68 +142,233 @@ class KVFunction:
         driver = self.selenium_manager.driver
 
         try:
-            # JS를 사용한 데이터 추출 예시
+            # JS를 사용한 데이터 추출 - 수정된 버전
             kv_data = driver.execute_script("""
                 const results = [];
-                const ctaLinks = document.querySelectorAll('.hd08-hero-kv-home__cta-wrap a');
                 
-                if (ctaLinks) {
-                    ctaLinks.forEach((link, index) => {
-                        // 여러 조건으로 확실하게 필터링
+                // 첫 번째 컴포: hd08-hero-kv-home__cta-wrap a (Button 1, Button 2)
+                const ctaLinks1 = document.querySelectorAll('.hd08-hero-kv-home__cta-wrap a');
+                
+                // 두 번째 컴포 : 첫 번째 co76-feature-kv__container의 cta-wrap a만 선택
+                const firstCo76Container = document.querySelector('.co76-feature-kv__container');
+                const ctaLinks2 = firstCo76Container ? firstCo76Container.querySelectorAll('.co76-feature-kv__cta-wrap a') : [];
+                
+                // Banner 클릭 - url-to-kv 클래스가 있는 것만
+                // 1. hd08-hero-kv-home__cta-wrap-clone a 중에서 url-to-kv 클래스가 있는 것만
+                const hd08CloneLinks = document.querySelectorAll('.hd08-hero-kv-home__cta-wrap-clone a');
+                const bannerLinks1 = Array.from(hd08CloneLinks).filter(link => link.classList.contains('url-to-kv'));
+                
+                // 2. 첫 번째 co76-feature-kv__container의 cta-wrap-clone a 중에서 url-to-kv 클래스가 있는 것만
+                const co76CloneLinks = firstCo76Container ? firstCo76Container.querySelectorAll('.co76-feature-kv__cta-wrap-clone a') : [];
+                const bannerLinks2 = Array.from(co76CloneLinks).filter(link => link.classList.contains('url-to-kv'));
+                
+                // hd08 데이터 처리 (Button 1, Button 2)
+                if (ctaLinks1.length > 0) {
+                    ctaLinks1.forEach((link, index) => {
                         const hasDisplayOnClass = link.classList.contains('cta-kv-display-on');
                         const hasText = link.textContent.trim().length > 0;
                         const hasValidHref = link.getAttribute("href") && 
                                             link.getAttribute("href") !== "" && 
                                             link.getAttribute("href") !== "null";
                         
-                        // cta-kv-display-on 클래스가 있거나, 텍스트와 유효한 href가 있는 경우만
                         if (hasDisplayOnClass || (hasText && hasValidHref)) {
-                            // 추가로 빈 텍스트는 제외
                             if (hasText) {
                                 results.push({
-                                    index: results.length + 1,
+                                    index: index + 1,
+                                    type: 'hd08_button',
                                     anCa: link.getAttribute("an-ca") || "",
+                                    anAc: link.getAttribute("an-ac") || "",
                                     anLa: link.getAttribute("an-la") || "",
-                                    text: link.textContent.trim()
+                                    text: link.textContent.trim(),
+                                    source: 'hd08-hero-kv-home'
                                 });
                             }
                         }
                     });
                 }
+                
+                // co76 데이터 처리 (Button 1, Button 2)
+                if (ctaLinks2.length > 0) {
+                    ctaLinks2.forEach((link, index) => {
+                        const hasDisplayOnClass = link.classList.contains('cta-kv-display-on');
+                        const hasText = link.textContent.trim().length > 0;
+                        const hasValidHref = link.getAttribute("href") && 
+                                            link.getAttribute("href") !== "" && 
+                                            link.getAttribute("href") !== "null";
+                        
+                        if (hasDisplayOnClass || (hasText && hasValidHref)) {
+                            if (hasText) {
+                                results.push({
+                                    index: index + 1,
+                                    type: 'co76_button',
+                                    anCa: link.getAttribute("an-ca") || "",
+                                    anAc: link.getAttribute("an-ac") || "",
+                                    anLa: link.getAttribute("an-la") || "",
+                                    text: link.textContent.trim(),
+                                    source: 'co76-feature-kv'
+                                });
+                            }
+                        }
+                    });
+                }
+                
+                // hd08 Banner 처리
+                if (bannerLinks1.length > 0) {
+                    bannerLinks1.forEach((link, index) => {
+                        const hasText = link.textContent.trim().length > 0;
+                        const hasValidHref = link.getAttribute("href") && 
+                                            link.getAttribute("href") !== "" && 
+                                            link.getAttribute("href") !== "null";
+                        
+                        if (hasText && hasValidHref) {
+                            results.push({
+                                index: index + 1,
+                                type: 'hd08_banner',
+                                anCa: link.getAttribute("an-ca") || "",
+                                anAc: link.getAttribute("an-ac") || "",
+                                anLa: link.getAttribute("an-la") || "",
+                                text: link.textContent.trim(),
+                                source: 'hd08-hero-kv-home'
+                            });
+                        }
+                    });
+                }
+                
+                // co76 Banner 처리
+                if (bannerLinks2.length > 0) {
+                    bannerLinks2.forEach((link, index) => {
+                        const hasText = link.textContent.trim().length > 0;
+                        const hasValidHref = link.getAttribute("href") && 
+                                            link.getAttribute("href") !== "" && 
+                                            link.getAttribute("href") !== "null";
+                        
+                        if (hasText && hasValidHref) {
+                            results.push({
+                                index: index + 1,
+                                type: 'co76_banner',
+                                anCa: link.getAttribute("an-ca") || "",
+                                anAc: link.getAttribute("an-ac") || "",
+                                anLa: link.getAttribute("an-la") || "",
+                                text: link.textContent.trim(),
+                                source: 'co76-feature-kv'
+                            });
+                        }
+                    });
+                }
+                
                 return results;
             """)
             
             # 추출한 데이터가 없을 경우
             if not kv_data or len(kv_data) == 0:
-                self.logger.log(" KV 데이터를 찾을 수 없습니다.")
+                self.logger.log("❌ KV 데이터를 찾을 수 없습니다.", "warning")
                 return
+                
             # 결과 로깅 및 엑셀에 저장
-            self.logger.log(f"KV 슬라이드에서 {len(kv_data)}개의 CTA 버튼 발견","info")
+            self.logger.log(f"KV에서 {len(kv_data)}개의 CTA 요소 발견","info")
 
-            # CTA 버튼 정보 저장
-            for cta in kv_data:
-                idx = cta['index']
-                anLa = cta['anLa']
-                anCa = cta['anCa']
-                text = cta['text']
-                
-                self.logger.log(f"CTA {idx}: {text}")
-                self.logger.log(f"  an-ca: {anCa}")
-                self.logger.log(f"  an-la: {anLa}")
-                self.logger.log("-" * 40)
-                
-                # 엑셀에 저장
-                try:
-                    if idx == 1:  # 첫 번째 CTA
-                        self.file_manager.worksheet[f"E{row}"] = anCa
-                        self.file_manager.worksheet[f"F{row}"] = anLa
-                    elif idx == 2:  # 두 번째 CTA
-                        self.file_manager.worksheet[f"G{row}"] = anCa
-                        self.file_manager.worksheet[f"H{row}"] = anLa
-                except Exception as e:
-                    self.logger.log(f"엑셀 저장 중 오류: {str(e)}")
+            # 각 타입별로 분류
+            hd08_buttons = [item for item in kv_data if item['type'] == 'hd08_button']
+            co76_buttons = [item for item in kv_data if item['type'] == 'co76_button']
+            hd08_banners = [item for item in kv_data if item['type'] == 'hd08_banner']
+            co76_banners = [item for item in kv_data if item['type'] == 'co76_banner']
             
-            self.logger.log(f"행 {row}에 CTA 정보 저장 완료")
+            self.logger.log(f"hd08 버튼: {len(hd08_buttons)}개, co76 버튼: {len(co76_buttons)}개", "info")
+            self.logger.log(f"hd08 배너: {len(hd08_banners)}개, co76 배너: {len(co76_banners)}개", "info")
+            
+            # hd08 Button 1, Button 2 저장 (E, F, G / H, I, J 열)
+            for idx, button in enumerate(hd08_buttons[:2]):  # 최대 2개의 버튼만 처리
+                anCa = button['anCa']
+                anAc = button['anAc']
+                anLa = button['anLa']
+                text = button['text']
+                
+                self.logger.log(f"hd08 Button {idx+1}: {text}")
+                self.logger.log(f"  an-ca: {anCa}")
+                self.logger.log(f"  an-ac: {anAc}")
+                self.logger.log(f"  an-la: {anLa}")
+                
+                try:
+                    if idx == 0:  # hd08 Button 1 - E, F, G 열
+                        self.file_manager.worksheet[f"E{row}"] = anCa
+                        self.file_manager.worksheet[f"F{row}"] = anAc
+                        self.file_manager.worksheet[f"G{row}"] = anLa
+                    elif idx == 1:  # hd08 Button 2 - H, I, J 열
+                        self.file_manager.worksheet[f"H{row}"] = anCa
+                        self.file_manager.worksheet[f"I{row}"] = anAc
+                        self.file_manager.worksheet[f"J{row}"] = anLa
+                except Exception as e:
+                    self.logger.log(f"hd08 버튼 엑셀 저장 중 오류: {str(e)}", "error")
+            
+            # hd08 Banner 저장 (K, L, M 열)
+            if hd08_banners:
+                banner = hd08_banners[0]  # 첫 번째 배너만 사용
+                anCa = banner['anCa']
+                anAc = banner['anAc']
+                anLa = banner['anLa']
+                text = banner['text']
+                
+                self.logger.log(f"hd08 Banner: {text}")
+                self.logger.log(f"  an-ca: {anCa}")
+                self.logger.log(f"  an-ac: {anAc}")
+                self.logger.log(f"  an-la: {anLa}")
+                
+                try:
+                    # hd08 Banner - K, L, M 열
+                    self.file_manager.worksheet[f"K{row}"] = anCa
+                    self.file_manager.worksheet[f"L{row}"] = anAc
+                    self.file_manager.worksheet[f"M{row}"] = anLa
+                except Exception as e:
+                    self.logger.log(f"hd08 배너 엑셀 저장 중 오류: {str(e)}", "error")
+            
+            # co76 Button 1, Button 2 저장 (N, O, P / Q, R, S 열)
+            for idx, button in enumerate(co76_buttons[:2]):  # 최대 2개의 버튼만 처리
+                anCa = button['anCa']
+                anAc = button['anAc']
+                anLa = button['anLa']
+                text = button['text']
+                
+                self.logger.log(f"co76 Button {idx+1}: {text}")
+                self.logger.log(f"  an-ca: {anCa}")
+                self.logger.log(f"  an-ac: {anAc}")
+                self.logger.log(f"  an-la: {anLa}")
+                
+                try:
+                    if idx == 0:  # co76 Button 1 - N, O, P 열
+                        self.file_manager.worksheet[f"N{row}"] = anCa
+                        self.file_manager.worksheet[f"O{row}"] = anAc
+                        self.file_manager.worksheet[f"P{row}"] = anLa
+                    elif idx == 1:  # co76 Button 2 - Q, R, S 열
+                        self.file_manager.worksheet[f"Q{row}"] = anCa
+                        self.file_manager.worksheet[f"R{row}"] = anAc
+                        self.file_manager.worksheet[f"S{row}"] = anLa
+                except Exception as e:
+                    self.logger.log(f"co76 버튼 엑셀 저장 중 오류: {str(e)}", "error")
+            
+            # co76 Banner 저장 (T, U, V 열)
+            if co76_banners:
+                banner = co76_banners[0]  # 첫 번째 배너만 사용
+                anCa = banner['anCa']
+                anAc = banner['anAc']
+                anLa = banner['anLa']
+                text = banner['text']
+                
+                self.logger.log(f"co76 Banner: {text}")
+                self.logger.log(f"  an-ca: {anCa}")
+                self.logger.log(f"  an-ac: {anAc}")
+                self.logger.log(f"  an-la: {anLa}")
+                
+                try:
+                    # co76 Banner - T, U, V 열
+                    self.file_manager.worksheet[f"T{row}"] = anCa
+                    self.file_manager.worksheet[f"U{row}"] = anAc
+                    self.file_manager.worksheet[f"V{row}"] = anLa
+                except Exception as e:
+                    self.logger.log(f"co76 배너 엑셀 저장 중 오류: {str(e)}", "error")
+            
+            self.logger.log("-" * 50)
+            total_items = len(hd08_buttons) + len(co76_buttons) + len(hd08_banners) + len(co76_banners)
+            self.logger.log(f"행 {row}에 KV 정보 저장 완료 (총 {total_items}개)", "success")
 
         except Exception as e:
             self.logger.log(f"KV 데이터 추출 중 오류: {str(e)}","error")

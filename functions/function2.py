@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from PyQt5.QtWidgets import QApplication
 
 from utils.logger import Logger
-import datetime
+from datetime import datetime
 import time
 import os
 
@@ -17,12 +17,10 @@ class DigitalDataFunction:
         self.logger = Logger(text_widget)
 
     def execute(self, filename, wait_time, server, username=None, password=None, cookie=None):
-        self.logger.log("Digital Data")
+        start_time = datetime.now()
+        self.logger.log(f"🚀 Digital Data 시작: {start_time.strftime('%Y년 %m월 %d일 %H시 %M분 %S초')}", "info")
         self.logger.log(f"Time Sleep : {wait_time}초")
         
-        start_time = datetime.datetime.now()
-        ymds = start_time.strftime("%Y/%m/%d/%H/%M/%S")
-        self.logger.log("시작: " + str(ymds))
         QApplication.processEvents()
         try:
             # 파일 로드
@@ -111,7 +109,12 @@ class DigitalDataFunction:
 
             # 최종 결과 저장
             self.file_manager.save_results('digital_data')
-            self.logger.log('작업 완료', "success")
+            end_time = datetime.now()
+            total_s = end_time - start_time
+
+            self.logger.log('최종 저장 완료', "success")
+            self.logger.log(f"소요시간: {str(total_s).split('.')[0]} (시:분:초)", "success")
+
             
 
         except Exception as e:
